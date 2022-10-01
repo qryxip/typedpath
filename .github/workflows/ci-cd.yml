@@ -94,7 +94,7 @@ jobs:
           - { target-triple: x86_64-apple-darwin     , os: macos-11     }
           - { target-triple: x86_64-unknown-linux-gnu, os: ubuntu-20.04 }
 
-    name: stable-${{ matrix.target-triple }}
+    name: ${{ matrix.target-triple }}
     runs-on: ${{ matrix.os }}
 
     steps:
