@@ -1,0 +1,11 @@
+[package]
+name = "typedpath"
+version = "0.0.0"
+edition = "2021"
+rust-version = "1.66"
+license = "MIT OR Apache-2.0"
+description = "Well typed std::path."
+repository = "https://github.com/qryxip/typedpath"
+keywords = ["filesystem", "path", "paths"]
+categories = ["filesystem"]
+publish = false
