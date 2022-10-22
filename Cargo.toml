@@ -9,3 +9,7 @@ repository = "https://github.com/qryxip/typedpath"
 keywords = ["filesystem", "path", "paths"]
 categories = ["filesystem"]
 publish = false
+
+[dependencies]
+camino = "1.1.1"
+path-slash = "0.2.1"
