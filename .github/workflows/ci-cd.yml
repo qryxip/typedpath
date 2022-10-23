@@ -27,10 +27,7 @@ jobs:
           components: rustfmt
 
       - name: cargo-fmt
-        uses: actions-rs/cargo@v1
-        with:
-          command: fmt
-          args: --all -- --check
+        run: cargo fmt --all -- --check
 
   grcov:
     name: grcov
@@ -52,21 +49,16 @@ jobs:
         uses: taiki-e/install-action@cargo-binstall
 
       - name: Install grcov
-        uses: actions-rs/cargo@v1
-        with:
-          command: binstall
-          args: >
-            grcov@=0.8.11
-            --pkg-url '{ repo }/releases/download/v{ version }/{ name }-{ target }.tar.bz2'
-            --pkg-fmt tbz2
-            --bin-dir '{ bin }{ binary-ext }'
+        run: |
+          cargo binstall \
+            grcov@=0.8.11 \
+            --pkg-url '{ repo }/releases/download/v{ version }/{ name }-{ target }.tar.bz2' \
+            --pkg-fmt tbz2 \
+            --bin-dir '{ bin }{ binary-ext }' \
             --no-confirm
 
       - name: cargo-test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --no-fail-fast -v -- --test-threads 1
+        run: cargo test --no-fail-fast -v -- --test-threads 1
         env:
           RUSTFLAGS: '-Cinstrument-coverage'
           RUST_BACKTRACE: full
@@ -109,24 +101,16 @@ jobs:
           components: clippy
 
       - name: cargo-generate-lockfile
-        uses: actions-rs/cargo@v1
-        with:
-          command: generate-lockfile
+        run: cargo generate-lockfile
 
       - name: rust-cache
         uses: Swatinem/rust-cache@v2
 
       - name: cargo-clippy
-        uses: actions-rs/cargo@v1
-        with:
-          command: clippy
-          args: --all-targets --target ${{ matrix.target-triple }} -- -D warnings
+        run: cargo clippy --all-targets --target ${{ matrix.target-triple }} -- -D warnings
 
       - name: cargo-test
-        uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --no-fail-fast --target ${{ matrix.target-triple }}
+        run: cargo test --no-fail-fast --target ${{ matrix.target-triple }}
         env:
           RUST_BACKTRACE: full
 
