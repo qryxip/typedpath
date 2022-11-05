@@ -1,4 +1,5 @@
 pub(crate) mod ancestors;
+pub(crate) mod as_typed_path;
 pub(crate) mod base;
 pub(crate) mod component;
 pub(crate) mod components;
@@ -7,5 +8,6 @@ pub(crate) mod path;
 pub(crate) mod path_buf;
 pub(crate) mod prefix;
 pub(crate) mod prefix_component;
+pub(crate) mod push;
 pub(crate) mod separator;
 pub(crate) mod str;
