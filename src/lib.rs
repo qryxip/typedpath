@@ -1,7 +1,7 @@
 #![warn(rust_2018_idioms)]
 
 use std::{
-    borrow::Cow,
+    borrow::{Borrow, Cow},
     ffi::OsStr,
     fmt::{self, Debug, Display},
     fs::{Metadata, ReadDir},
@@ -14,14 +14,18 @@ use std::{
 
 use path_slash::{CowExt as _, PathExt as _};
 
-use crate::sealed::{
-    components::Sealed as _,
-    iter::Sealed as _,
-    path::Sealed as _,
-    path_buf::{IntoResult as _, Sealed as _},
-    prefix_component::Sealed as _,
+use crate::{
+    operations::{AsTypedPath, BaseJoin, Push, SeparatorJoin, StrJoinPath},
+    sealed::{
+        components::Sealed as _,
+        iter::Sealed as _,
+        path::Sealed as _,
+        path_buf::{IntoResult as _, Sealed as _},
+        prefix_component::Sealed as _,
+    },
 };
 
+pub mod operations;
 pub mod path_traits;
 mod sealed;
 
@@ -87,11 +91,6 @@ impl<S: Str + ?Sized, B, D> TypedPath<S, B, D> {
 
     pub fn extension(&self) -> Option<&S> {
         self.inner.__extension()
-    }
-
-    // FIXME
-    pub fn join<P: AsRef<S::Path>>(&self, path: P) -> S::PathBuf {
-        self.inner.__join(path)
     }
 
     // FIXME
@@ -172,6 +171,21 @@ impl<S: Str + ?Sized, B, D> TypedPath<S, B, D> {
     }
 }
 
+impl<S: Str + ?Sized, B: Base, D: Separator> TypedPath<S, B, D> {
+    pub fn join<P, S2, B2, D2>(&self, path: P) -> TypedPathBuf<S::Output, B::Output, D::Output>
+    where
+        S: StrJoinPath<S2>,
+        B: BaseJoin<B2>,
+        D: SeparatorJoin<D2>,
+        P: AsTypedPath<Str = S2, Base = B2, Separator = D2>,
+        S2: Str + ?Sized,
+        B2: Base,
+        D2: Separator,
+    {
+        TypedPathBuf::from_inner(S::__join_path(&self.inner, &path.__as_typed_path().inner))
+    }
+}
+
 impl<S: Str + ?Sized> TypedPath<S, (), ()> {
     pub fn new<S_: AsRef<S> + ?Sized>(s: &S_) -> &Self {
         Self::from_inner(S::Path::__new(s))
@@ -207,6 +221,14 @@ impl<B, D> TypedPath<OsStr, B, D> {
     }
 }
 
+impl<S: Str + ?Sized, B, D> ToOwned for TypedPath<S, B, D> {
+    type Owned = TypedPathBuf<S, B, D>;
+
+    fn to_owned(&self) -> Self::Owned {
+        self.to_path_buf()
+    }
+}
+
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct TypedPathBuf<S: Str + ?Sized, B, D> {
     marker: PhantomData<fn() -> (B, D)>,
@@ -223,6 +245,10 @@ impl<S: Str + ?Sized, B, D> TypedPathBuf<S, B, D> {
 
     pub fn into_std_path_buf(self) -> std::path::PathBuf {
         self.inner.__into_std_path_buf()
+    }
+
+    pub fn as_path(&self) -> &TypedPath<S, B, D> {
+        TypedPath::from_inner(self.inner.__as_path())
     }
 }
 
@@ -241,6 +267,17 @@ impl<S: Str + ?Sized, B: Base, D: Separator> TypedPathBuf<S, B, D> {
         B::__check(path.as_ref())?;
         D::__normalize(&mut path);
         Ok(Self::from_inner(S::PathBuf::__from_camino_path_buf(path)))
+    }
+
+    pub fn push<P, S2, B2, D2>(&mut self, path: P)
+    where
+        Self: Push<S2, B2, D2>,
+        P: AsTypedPath<Str = S2, Base = B2, Separator = D2>,
+        S2: Str + ?Sized,
+        B2: Base,
+        D2: Separator,
+    {
+        self.__push(&path.__as_typed_path().inner);
     }
 }
 
@@ -265,6 +302,12 @@ impl<S: Str + ?Sized, D> Default for TypedPathBuf<S, (), D> {
 impl<S: Str + ?Sized, D> Default for TypedPathBuf<S, Rel, D> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<S: Str + ?Sized, B, D> Borrow<TypedPath<S, B, D>> for TypedPathBuf<S, B, D> {
+    fn borrow(&self) -> &TypedPath<S, B, D> {
+        self.as_path()
     }
 }
 
